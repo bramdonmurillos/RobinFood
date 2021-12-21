@@ -30,21 +30,19 @@ stages:
   - stage: deploy
     jobs:
       - deployment: DeployWeb
-        displayName: deploy Web App
+        displayName: deploy Web
         pool:
           vmImage: 'Ubuntu-latest'
- 
-        environment: 'smarthotel-dev'
+        environment: 'web'
         strategy:
-          # default deployment strategy, more coming...
           runOnce:
             deploy:
               steps:
               - task: ms-vscs-rm.vss-services-ansible.ansible-task.Ansible@0
-                displayName: 'Run playbook to deploy Azure resources'
+                displayName: 'Run playbook to deploy'
                 inputs:
                   ansibleInterface: remoteMachine
                   connectionOverSsh: ansible
                   playbookRootRemoteMachine: '$(System.DefaultWorkingDirectory)/_Ansible-CI/drop/ansible-scripts'
-                  playbookPathLinkedArtifactOnRemoteMachine: web.yml
+                  playbookPathLinkedArtifactOnRemoteMachine: web-conf.yml
                   failOnStdErr: false
