@@ -1,0 +1,50 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+  demands: maven
+
+stages:
+  - stage: Build
+    jobs:
+      - job:
+        steps:
+        - task: Maven@3
+          displayName: 'Maven Build '
+          inputs:
+            mavenPomFile: 'pom.xml'
+
+        - task: CopyFiles@2
+          displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+          inputs:
+            SourceFolder: '$(build.sourcesdirectory)'
+            Contents: |
+              **/*.war
+              **/*.yml
+              TargetFolder: '$(build.artifactstagingdirectory)'
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish Artifact: drop'
+          inputs:
+            PathtoPublish: '$(build.artifactstagingdirectory)'
+  - stage: deploy
+    jobs:
+      - deployment: DeployWeb
+        displayName: deploy Web App
+        pool:
+          vmImage: 'Ubuntu-latest'
+ 
+        environment: 'smarthotel-dev'
+        strategy:
+          # default deployment strategy, more coming...
+          runOnce:
+            deploy:
+              steps:
+              - task: ms-vscs-rm.vss-services-ansible.ansible-task.Ansible@0
+                displayName: 'Run playbook to deploy Azure resources'
+                inputs:
+                  ansibleInterface: remoteMachine
+                  connectionOverSsh: ansible
+                  playbookRootRemoteMachine: '$(System.DefaultWorkingDirectory)/_Ansible-CI/drop/ansible-scripts'
+                  playbookPathLinkedArtifactOnRemoteMachine: web.yml
+                  failOnStdErr: false

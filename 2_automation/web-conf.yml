@@ -1,0 +1,42 @@
+- hosts: "Node1"
+  tasks: 
+   
+   - name: Starting Docker Daemon
+     service:
+       name: docker
+       state: started
+       enabled: yes
+     when: y.failed == false
+
+   - name: Pull a Docker Image
+     docker_image: 
+        name: httpd
+        tag: latest
+        source: pull
+     register: z
+   - name: Checking Pull Status
+     debug: 
+       var: z
+
+   - name: Creating a Persistent Volume Dir
+     file:
+       path: "/root/host"
+       state: directory
+
+   - name: Copying the HTML code in the Directory
+     copy: 
+       src: "./index.html"
+       dest: "/root/host"
+
+   - name: Launching an HTTPD Container
+     when: z.failed == false
+     docker_container:
+       name: apache-server
+       image: httpd
+       state: started
+       exposed_ports:
+         - "80"
+       ports:
+         - "8080:80"
+       volumes: 
+         - /root/host:/usr/local/apache2/htdocs

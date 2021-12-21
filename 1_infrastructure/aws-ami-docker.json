@@ -1,0 +1,45 @@
+{
+    "variables": {
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+      "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
+    },
+    "builders": [{
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "region": "us-east-2",
+      "source_ami": "ami-08ee2516c7709ea48",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "architecture": "x86_64",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
+          "block-device-mapping.volume-type": "gp2",
+          "root-device-type": "ebs"
+        },
+        "owners": ["099720109477"],
+        "most_recent": true
+      },
+      "instance_type": "t2.micro",
+      "ssh_username": "robinserver",
+      "ami_name": "packer-example {{timestamp}}"
+    }],
+    "provisioners": [
+        {
+            "type": "file",
+            "source": "./scripts/id_rsa.pub",
+            "destination": "~/.ssh/"
+        },
+        {
+            "type": "shell",
+            "inline":[
+                "cat ~/.ssh/packer-key.pub >> ~/.ssh/authorized_keys"
+            ]
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install-docker.sh"
+        }
+
+    ]
+  }
